@@ -4,7 +4,7 @@ declare(strict_types=1);
 $DB_HOST = "localhost";
 $DB_NAME = "bakery";
 $DB_USER = "root";
-$DB_PASS = "";
+$DB_PASS = "1234";
 
 $dsn = "mysql:host={$DB_HOST};dbname={$DB_NAME};charset=utf8mb4";
 

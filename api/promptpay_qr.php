@@ -5,7 +5,7 @@ require __DIR__ . "/../config/db.php";
 
 header("Content-Type: application/json; charset=utf-8");
 
-$PROMPTPAY_ID = "0652652518"; // <-- ใส่เบอร์/เลขบัตร/เลขภาษี ของร้าน
+$PROMPTPAY_ID = "0972370002"; // <-- ใส่เบอร์/เลขบัตร/เลขภาษี ของร้าน
 
 $raw = file_get_contents("php://input") ?: "";
 $data = json_decode($raw, true);

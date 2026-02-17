@@ -89,6 +89,10 @@ try {
 
 } catch (Throwable $e) {
   http_response_code(401);
-  echo json_encode(["ok" => false, "error" => "Invalid token"]);
+  echo json_encode([
+    "ok" => false,
+    "error" => "Invalid token",
+    "detail" => $e->getMessage()
+  ]);
   exit;
 }

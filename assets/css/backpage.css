@@ -1,0 +1,193 @@
+:root{
+  --ink:#0f172a;
+  --muted:#64748b;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --line:rgba(15,23,42,.08);
+  --soft:rgba(255,255,255,.70);
+}
+
+body{
+  background: var(--bg);
+  font-family:"Kanit",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans Thai",sans-serif;
+  color:var(--ink);
+}
+
+.app-shell{ max-width: 1500px; }
+
+.brand-badge{
+  width:44px;height:44px;display:grid;place-items:center;
+  border-radius:16px;
+  box-shadow:0 10px 25px rgba(15,23,42,.10);
+}
+
+.card{
+  background:var(--card);
+  border:1px solid rgba(15,23,42,.06);
+  border-radius:20px;
+  box-shadow:0 12px 35px rgba(15,23,42,.08);
+}
+
+/* nav pills */
+.nav-pills .nav-link{
+  border-radius:14px;
+  padding:.55rem .85rem;
+  color:var(--ink);
+  background:transparent;
+  border:1px solid transparent;
+}
+.nav-pills .nav-link:hover{
+  background:#eef2f7;
+  border-color:#e2e8f0;
+}
+.nav-pills .nav-link.active{
+  background:#111827;
+  border-color:#111827;
+  color:#fff;
+}
+
+/* toolbar */
+.toolbar{
+  background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.55));
+  border:1px solid rgba(15,23,42,.06);
+  border-radius:18px;
+  padding:.75rem .85rem;
+}
+
+/* inputs */
+.form-control, .form-select{ border-radius:14px; }
+.btn{ border-radius:14px; }
+
+.soft{
+  background:var(--soft);
+  border:1px solid rgba(15,23,42,.08);
+  backdrop-filter: blur(6px);
+}
+
+.search-pill{
+  border-radius:16px;
+  overflow:hidden;
+}
+.search-pill .input-group-text, .search-pill .form-control{
+  border-radius:0 !important;
+}
+.search-pill .form-control::placeholder{ color:#94a3b8; }
+
+/* chips */
+.chip{
+  font-size:.82rem;
+  border-radius:999px;
+  padding:.28rem .62rem;
+  border:1px solid rgba(15,23,42,.10);
+  background:#fff;
+}
+.chip i{ transform: translateY(-.5px); }
+
+/* ===== table wrap ===== */
+.table-wrap{
+  border:1px solid rgba(15,23,42,.06);
+  border-radius:18px;
+  overflow:hidden;
+  background:#fff;
+}
+.table thead{
+  background:#f8fafc;
+}
+.table thead th{
+  font-weight:600;
+  color:#334155;
+  border-bottom:1px solid rgba(15,23,42,.10) !important;
+  padding:.85rem .85rem;
+  white-space:nowrap;
+}
+.table tbody td{
+  padding:.85rem .85rem;
+  border-top:1px solid rgba(15,23,42,.06);
+  vertical-align: middle;
+}
+.table-hover tbody tr{
+  transition: background .15s ease, transform .15s ease;
+}
+.table-hover tbody tr:hover{ background:#f8fafc; }
+
+.truncate{
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* action buttons group */
+.btn-group-soft .btn{
+  border-color:rgba(15,23,42,.18);
+}
+.btn-group-soft .btn:hover{
+  background:#eef2f7;
+}
+
+/* headbar */
+.table-headbar{
+  padding:.25rem 0 .5rem 0;
+}
+
+/* pagination */
+.pagination-soft .page-link{
+  border:1px solid transparent;
+  background:transparent;
+  color:var(--ink);
+  border-radius:12px;
+  padding:.55rem .9rem;
+  margin-left:6px;
+  box-shadow:none;
+}
+.pagination-soft .page-link:hover{
+  background:#eef2f7;
+  border-color:#e2e8f0;
+  color:var(--ink);
+}
+.pagination-soft .page-item.active .page-link{
+  background:#111827;
+  border-color:#111827;
+  color:#fff;
+}
+.pagination-soft .page-item.disabled .page-link{
+  opacity:.35;
+  pointer-events:none;
+}
+
+/* toast */
+.toast{
+  border-radius:18px;
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:0 18px 45px rgba(15,23,42,.18);
+}
+.toast-header{ padding:.9rem 1rem; }
+.toast-body{
+  padding:.9rem 1rem 1rem 1rem;
+  font-size:1.02rem;
+  line-height:1.4;
+  color:var(--ink);
+}
+#resultToast{
+  min-width:380px;
+  max-width:520px;
+  background:#fff;
+}
+#resultTitle, .toast-header strong{ font-size:1.05rem; }
+#resultIcon{ font-size:1.25rem; }
+
+@keyframes slideOutRight{
+  0%{ opacity:1; transform:translateX(0); }
+  100%{ opacity:0; transform:translateX(40px); }
+}
+.toast.slide-out{ animation: slideOutRight .35s ease forwards; }
+
+/* smooth hide for search */
+.fade-smooth{ transition: opacity .18s ease, transform .18s ease; }
+.row-hide{ opacity:0; transform: translateY(4px); }
+
+/* nicer modal corners */
+.modal-content{
+  border-radius:18px !important;
+  border:1px solid rgba(15,23,42,.08);
+}

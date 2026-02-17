@@ -1,0 +1,213 @@
+/* auth.css - ใช้ร่วมกับ style.css ของหน้า index */
+
+.page-auth{
+  font-family: "Kanit", system-ui, -apple-system, Segoe UI, sans-serif;
+  background:
+    radial-gradient(900px 520px at 10% 0%, rgba(0,0,0,.05), transparent 60%),
+    radial-gradient(900px 520px at 90% 10%, rgba(0,0,0,.04), transparent 60%),
+    #fafafa;
+}
+
+.auth-wrap{
+  max-width: 520px;
+}
+
+.auth-card{
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 22px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.06);
+}
+
+.auth-head{
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.auth-badge{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.03));
+}
+
+.auth-input{
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.10);
+}
+
+.auth-input:focus{
+  box-shadow: 0 0 0 .2rem rgba(0,0,0,.06);
+  border-color: rgba(0,0,0,.18);
+}
+
+.auth-divider{
+  position: relative;
+  text-align: center;
+}
+.auth-divider span{
+  display: inline-block;
+  padding: 0 12px;
+  background: rgba(255,255,255,.92);
+  color: rgba(0,0,0,.55);
+  font-size: .9rem;
+}
+.auth-divider:before{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  top:50%;
+  height:1px;
+  background: rgba(0,0,0,.08);
+  transform: translateY(-50%);
+  z-index:-1;
+}
+
+/* ปุ่ม Google (สีสุภาพ ไม่ฉูดฉาด) */
+.btn-auth-google{
+  border: 1px solid rgba(0,0,0,.10);
+  background: #fff;
+  color: #111;
+}
+.btn-auth-google:hover{
+  background: rgba(0,0,0,.02);
+}
+
+.btn-google{
+  border:1px solid rgba(0,0,0,.12);
+  background:#fff;
+  color:#111;
+  font-weight:500;
+}
+.btn-google:hover{
+  background:#f8f9fa;
+}
+
+
+/* จัดกลางหน้าจอ */
+.auth-center{
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-card{
+  width: 100%;
+  max-width: 420px;
+  border-radius: 22px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 30px 70px rgba(0,0,0,.08);
+}
+
+.auth-badge{
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  background: linear-gradient(135deg,#f3f3f3,#fafafa);
+}
+
+.auth-input{
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.10);
+}
+
+.auth-input:focus{
+  border-color: rgba(0,0,0,.20);
+  box-shadow: 0 0 0 .15rem rgba(0,0,0,.05);
+}
+
+.page-auth{
+  background:
+    radial-gradient(900px 500px at 10% 0%, rgba(0,0,0,.04), transparent 60%),
+    radial-gradient(900px 500px at 90% 100%, rgba(0,0,0,.03), transparent 60%),
+    #fafafa;
+}
+
+body{
+  font-family: "Kanit", sans-serif;
+}
+
+/* จัดกลางหน้าจอ */
+.auth-center{
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* พื้นหลัง */
+.page-auth{
+  background:
+    radial-gradient(900px 500px at 10% 0%, rgba(0,0,0,.04), transparent 60%),
+    radial-gradient(900px 500px at 90% 100%, rgba(0,0,0,.03), transparent 60%),
+    #fafafa;
+}
+
+/* การ์ด */
+.auth-card{
+  width: 100%;
+  max-width: 420px;
+  border-radius: 22px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 30px 70px rgba(0,0,0,.08);
+}
+
+/* ไอคอนด้านบน */
+.auth-badge{
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  font-size: 26px;
+}
+
+/* เส้นคั่น */
+.auth-divider{
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #999;
+}
+.auth-divider::before,
+.auth-divider::after{
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+.auth-divider:not(:empty)::before{
+  margin-right: .75em;
+}
+.auth-divider:not(:empty)::after{
+  margin-left: .75em;
+}
+
+/* ปุ่ม Google */
+.btn-google{
+  background: #fff;
+  border: 1px solid #ddd;
+  font-weight: 500;
+}
+.btn-google:hover{
+  background: #f8f9fa;
+}
+
+/* Input focus */
+.auth-input:focus{
+  border-color: #000;
+  box-shadow: 0 0 0 .15rem rgba(0,0,0,.1);
+}

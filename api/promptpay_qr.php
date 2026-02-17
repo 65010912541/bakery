@@ -2,7 +2,6 @@
 declare(strict_types=1);
 session_start();
 require __DIR__ . "/../config/db.php";
-if (function_exists('opcache_reset')) { @opcache_reset(); }
 
 header("Content-Type: application/json; charset=utf-8");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -61,13 +60,7 @@ foreach ($merged as $pid => $qty) {
 $amount = round($total, 2);
 $payload = buildPromptPayPayload($PROMPTPAY_ID, $amount);
 
-echo json_encode([
-  "ok"=>true,
-  "amount"=>$amount,
-  "payload"=>$payload,
-  "debug_pp_id"=>$PROMPTPAY_ID,
-  "debug_file"=>__FILE__
-]);
+echo json_encode(["ok"=>true, "amount"=>$amount, "payload"=>$payload]);
 
 function buildPromptPayPayload(string $id, float $amount): string {
   $id = preg_replace('/\D+/', '', $id) ?? "";

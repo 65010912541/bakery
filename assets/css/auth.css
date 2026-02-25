@@ -1,213 +1,181 @@
-/* auth.css - ใช้ร่วมกับ style.css ของหน้า index */
+/* assets/css/auth.css */
+:root{
+  --bg1:#fff7f2;      /* cream */
+  --bg2:#ffe7da;      /* peach */
+  --card:#ffffffcc;   /* glass */
+  --text:#2b2b2b;
+  --muted:#6b6b6b;
+  --brand:#d9776c;    /* rose/bakery */
+  --brand2:#f1b48f;   /* warm accent */
+  --border:#f2d6c9;
+  --shadow: 0 18px 45px rgba(0,0,0,.10);
+}
 
-.page-auth{
-  font-family: "Kanit", system-ui, -apple-system, Segoe UI, sans-serif;
+body.page-auth{
+  font-family: "Kanit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text);
+  min-height: 100vh;
   background:
-    radial-gradient(900px 520px at 10% 0%, rgba(0,0,0,.05), transparent 60%),
-    radial-gradient(900px 520px at 90% 10%, rgba(0,0,0,.04), transparent 60%),
-    #fafafa;
+    radial-gradient(1200px 800px at 20% 10%, var(--bg2), transparent 60%),
+    radial-gradient(900px 700px at 80% 20%, #ffe9f0, transparent 55%),
+    linear-gradient(180deg, var(--bg1), #ffffff 70%);
 }
 
-.auth-wrap{
-  max-width: 520px;
-}
-
-.auth-card{
-  border: 1px solid rgba(0,0,0,.08);
-  border-radius: 22px;
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 18px 40px rgba(0,0,0,.06);
-}
-
-.auth-head{
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.auth-badge{
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+/* center */
+.auth-center{
+  min-height: 100vh;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.03));
+  padding: 28px 16px;
 }
 
-.auth-input{
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.10);
-}
-
-.auth-input:focus{
-  box-shadow: 0 0 0 .2rem rgba(0,0,0,.06);
-  border-color: rgba(0,0,0,.18);
-}
-
-.auth-divider{
+/* card */
+.auth-card{
+  width: 100%;
+  max-width: 440px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
   position: relative;
-  text-align: center;
+  overflow: hidden;
 }
-.auth-divider span{
-  display: inline-block;
-  padding: 0 12px;
-  background: rgba(255,255,255,.92);
-  color: rgba(0,0,0,.55);
-  font-size: .9rem;
-}
-.auth-divider:before{
+
+.auth-card::before{
   content:"";
   position:absolute;
-  left:0; right:0;
-  top:50%;
-  height:1px;
-  background: rgba(0,0,0,.08);
-  transform: translateY(-50%);
-  z-index:-1;
+  inset:-2px;
+  background:
+    radial-gradient(360px 220px at 15% 0%, rgba(217,119,108,.25), transparent 60%),
+    radial-gradient(340px 220px at 85% 0%, rgba(241,180,143,.28), transparent 60%);
+  pointer-events:none;
 }
 
-/* ปุ่ม Google (สีสุภาพ ไม่ฉูดฉาด) */
-.btn-auth-google{
-  border: 1px solid rgba(0,0,0,.10);
-  background: #fff;
-  color: #111;
-}
-.btn-auth-google:hover{
-  background: rgba(0,0,0,.02);
+.auth-card > *{
+  position: relative;
 }
 
-.btn-google{
-  border:1px solid rgba(0,0,0,.12);
-  background:#fff;
-  color:#111;
-  font-weight:500;
-}
-.btn-google:hover{
-  background:#f8f9fa;
-}
-
-
-/* จัดกลางหน้าจอ */
-.auth-center{
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.auth-card{
-  width: 100%;
-  max-width: 420px;
-  border-radius: 22px;
-  border: 1px solid rgba(0,0,0,.08);
-  background: rgba(255,255,255,.95);
-  box-shadow: 0 30px 70px rgba(0,0,0,.08);
-}
-
+/* header badge */
 .auth-badge{
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
   display: grid;
   place-items: center;
-  font-size: 24px;
-  background: linear-gradient(135deg,#f3f3f3,#fafafa);
+  font-size: 22px;
+  background: linear-gradient(135deg, rgba(217,119,108,.20), rgba(241,180,143,.24));
+  border: 1px solid rgba(217,119,108,.25);
+  box-shadow: 0 10px 20px rgba(217,119,108,.10);
 }
 
+.auth-card h1{
+  letter-spacing: .2px;
+}
+
+.auth-card .text-muted{
+  color: var(--muted) !important;
+}
+
+/* inputs */
 .auth-input{
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 16px !important;
+  border: 1px solid var(--border) !important;
+  background: rgba(255,255,255,.85) !important;
+  padding: 14px 14px;
+  transition: .15s ease;
 }
 
 .auth-input:focus{
-  border-color: rgba(0,0,0,.20);
-  box-shadow: 0 0 0 .15rem rgba(0,0,0,.05);
+  box-shadow: 0 0 0 .25rem rgba(217,119,108,.18) !important;
+  border-color: rgba(217,119,108,.55) !important;
+  background: #fff !important;
 }
 
-.page-auth{
-  background:
-    radial-gradient(900px 500px at 10% 0%, rgba(0,0,0,.04), transparent 60%),
-    radial-gradient(900px 500px at 90% 100%, rgba(0,0,0,.03), transparent 60%),
-    #fafafa;
+.form-label{
+  font-weight: 500;
+  color: #3b3b3b;
+  margin-bottom: 6px;
 }
 
-body{
-  font-family: "Kanit", sans-serif;
+/* brand button */
+.btn-brand{
+  background: linear-gradient(135deg, var(--brand), var(--brand2));
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: .2px;
+  box-shadow: 0 12px 24px rgba(217,119,108,.22);
+  transition: transform .12s ease, filter .12s ease;
 }
 
-/* จัดกลางหน้าจอ */
-.auth-center{
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+.btn-brand:hover{
+  filter: brightness(1.02);
+  transform: translateY(-1px);
 }
 
-/* พื้นหลัง */
-.page-auth{
-  background:
-    radial-gradient(900px 500px at 10% 0%, rgba(0,0,0,.04), transparent 60%),
-    radial-gradient(900px 500px at 90% 100%, rgba(0,0,0,.03), transparent 60%),
-    #fafafa;
+.btn-brand:active{
+  transform: translateY(0px);
 }
 
-/* การ์ด */
-.auth-card{
-  width: 100%;
-  max-width: 420px;
-  border-radius: 22px;
-  border: 1px solid rgba(0,0,0,.08);
-  background: rgba(255,255,255,.95);
-  box-shadow: 0 30px 70px rgba(0,0,0,.08);
-}
-
-/* ไอคอนด้านบน */
-.auth-badge{
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-  font-size: 26px;
-}
-
-/* เส้นคั่น */
+/* divider */
 .auth-divider{
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: #999;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color: var(--muted);
 }
+
 .auth-divider::before,
 .auth-divider::after{
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid #ddd;
-}
-.auth-divider:not(:empty)::before{
-  margin-right: .75em;
-}
-.auth-divider:not(:empty)::after{
-  margin-left: .75em;
+  content:"";
+  flex:1;
+  height:1px;
+  background: rgba(0,0,0,.08);
 }
 
-/* ปุ่ม Google */
+.auth-divider span{
+  font-size: 13px;
+}
+
+/* google button */
 .btn-google{
   background: #fff;
-  border: 1px solid #ddd;
-  font-weight: 500;
-}
-.btn-google:hover{
-  background: #f8f9fa;
+  border: 1px solid rgba(0,0,0,.10);
+  font-weight: 600;
+  color: #222;
+  box-shadow: 0 10px 22px rgba(0,0,0,.06);
+  transition: transform .12s ease, box-shadow .12s ease;
 }
 
-/* Input focus */
-.auth-input:focus{
-  border-color: #000;
-  box-shadow: 0 0 0 .15rem rgba(0,0,0,.1);
+.btn-google:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(0,0,0,.08);
 }
+
+.btn-google img{
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.10));
+}
+
+/* alerts */
+.alert{
+  border-radius: 18px !important;
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+/* link */
+.auth-card a{
+  text-decoration: none;
+}
+.auth-card a:hover{
+  text-decoration: underline;
+}
+
+@media (min-width: 768px){
+  .page-register .auth-card{
+    max-width: 760px;
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+  }
+}
+

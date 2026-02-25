@@ -88,8 +88,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <div class="text-center mb-4">
       <div class="auth-badge mx-auto mb-2">🔐</div>
-      <h1 class="h4 fw-semibold mb-1">Login</h1>
-      <div class="text-muted small">เข้าสู่ระบบก่อนสั่งซื้อ</div>
+      <div class="fw-semibold" style="color:#d9776c;">HokKao(69) Bakery</div>
+      <h1 class="h4 fw-semibold mb-1">ยินดีต้อนรับ</h1>
+      <div class="text-muted small">เข้าสู่ระบบเพื่อสั่งเบเกอรี่</div>
     </div>
 
     <?php if ($error !== ""): ?>
@@ -119,18 +120,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       <div class="mb-3">
         <label class="form-label">Username</label>
         <input class="form-control form-control-lg auth-input"
-               name="username"
-               autocomplete="username"
-               required>
+              name="username"
+              autocomplete="username"
+              placeholder="กรอกชื่อผู้ใช้"
+              required>
       </div>
 
       <div class="mb-4">
         <label class="form-label">Password</label>
         <input class="form-control form-control-lg auth-input"
-               type="password"
-               name="password"
-               autocomplete="current-password"
-               required>
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="กรอกรหัสผ่าน"
+              required>
       </div>
 
       <button class="btn btn-brand w-100 rounded-pill btn-lg">

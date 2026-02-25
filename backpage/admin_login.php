@@ -7,10 +7,11 @@ require __DIR__ . "/../config/db.php";
 function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, "UTF-8"); }
 
 // หน้า admin ที่จะไปหลัง login สำเร็จ
-$DEFAULT_NEXT = "backpage_products.php";
+$DEFAULT_NEXT = "backpage_dashboard.php";
 
 // whitelist (อยู่โฟลเดอร์เดียวกับไฟล์ admin อื่น)
 $allowedNext = [
+  "backpage_dashboard.php",
   "backpage_products.php",
   "backpage_categories.php",
   "backpage_orders.php",
@@ -39,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $error = "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน";
   } else {
     $stmt = $pdo->prepare("
-      SELECT id, username, password_hash, full_name, role, status
+      SELECT id, username, password_hash, full_name, status
       FROM admins
       WHERE username = :u
       LIMIT 1
@@ -60,7 +61,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         "id" => (int)$admin["id"],
         "username" => (string)$admin["username"],
         "full_name" => (string)($admin["full_name"] ?? ""),
-        "role" => (string)($admin["role"] ?? "admin"),
         "status" => (string)($admin["status"] ?? "active"),
       ];
 
@@ -82,7 +82,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <link rel="stylesheet" href="../assets/css/auth.css">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body class="page-auth">
@@ -126,11 +127,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         เข้าสู่ระบบ
       </button>
     </form>
-
-    <div class="text-center small text-muted">
-      <a class="fw-semibold link-dark" href="../index.php">กลับไปหน้าร้าน</a>
-    </div>
-
   </div>
 </div>
 

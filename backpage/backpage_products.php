@@ -337,147 +337,8 @@ $products = $stmt->fetchAll();
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/backpage_products.css">
 
-  <style>
-    body { background: #f6f7fb; font-family: "Kanit", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Thai", sans-serif; }
-    .app-shell { max-width: 1150px; }
-    .brand-badge { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 16px; }
-    .card { border: 0; border-radius: 18px; box-shadow: 0 10px 25px rgba(15, 23, 42, .06); }
-    .nav-pills .nav-link { border-radius: 14px; }
-    .table > :not(caption) > * > * { vertical-align: middle; }
-    .chip { font-size: .85rem; border-radius: 999px; padding: .25rem .6rem; }
-    .truncate { max-width: 340px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .form-control, .form-select { border-radius: 14px; }
-    .btn { border-radius: 14px; }
-    .thumb { width: 44px; height: 44px; border-radius: 14px; object-fit: cover; border: 1px solid rgba(0,0,0,.08); background: #fff; }
-    .soft { background: rgba(255,255,255,.65); border: 1px solid rgba(0,0,0,.06); }
-    .toast { border-radius: 16px; }
-    .fade-smooth { transition: opacity .18s ease, transform .18s ease; }
-    .row-hide { opacity: 0; transform: translateY(4px); }
-    /* Toast ให้ชัด อ่านง่าย */
-.toast {
-  border-radius: 18px;
-  border: 1px solid rgba(0,0,0,.08);
-  box-shadow: 0 18px 45px rgba(15, 23, 42, .18);
-}
-
-.toast-header {
-  padding: .9rem 1rem;
-}
-
-.toast-body {
-  padding: .9rem 1rem 1rem 1rem;
-  font-size: 1.02rem;
-  line-height: 1.4;
-  color: #0f172a;
-}
-
-#confirmToast, #resultToast {
-  min-width: 380px;
-  max-width: 520px;
-  background: #ffffff; /* ทำให้ทึบ ไม่จาง */
-}
-
-#resultTitle, .toast-header strong {
-  font-size: 1.05rem;
-}
-
-#resultIcon {
-  font-size: 1.25rem;
-}
-/* Toast Slide Out Animation */
-@keyframes slideOutRight {
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-}
-
-.toast.slide-out {
-  animation: slideOutRight 0.35s ease forwards;
-}
-/* ทำให้ input-group ของค้นหาโค้งมนแบบ pill */
-.search-pill {
-  border-radius: 16px;
-  overflow: hidden; /* สำคัญ: ให้มุมมนทั้งกล่อง */
-}
-.search-pill .input-group-text,
-.search-pill .form-control {
-  border-radius: 0 !important; /* ให้กล่องรวมเป็นมุมเดียว */
-}
-.table-headbar{
-  padding: .25rem 0;
-}
-
-/* ===== Pagination (Soft theme) ===== */
-.pagination-soft .page-link{
-  border: 1px solid transparent;
-  background: transparent;
-  color: #0f172a;
-  border-radius: 12px;
-  padding: .55rem .9rem;
-  margin-left: 6px;
-  box-shadow: none;
-}
-
-.pagination-soft .page-link:hover{
-  background: #eef2f7;
-  border-color: #e2e8f0;
-  color: #0f172a;
-}
-
-.pagination-soft .page-item.active .page-link{
-  background: #111827;
-  border-color: #111827;
-  color: #fff;
-}
-
-.pagination-soft .page-item.disabled .page-link{
-  opacity: .35;
-  pointer-events: none;
-}
-
-/* กล่องครอบตารางให้ดูเป็นกรอบ */
-.table-box{
-  background: rgba(255,255,255,.75);
-  border: 1px solid rgba(0,0,0,.06);
-  border-radius: 18px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, .06);
-  padding: 14px;
-}
-
-/* แถบบนของตาราง (ซ้าย: ทั้งหมด | ขวา: pagination) */
-.table-topbar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding: 4px 2px 10px 2px;
-}
-
-/* ให้ pagination ดูเข้าธีมขึ้น (ไม่แข็ง) */
-.pagination.pagination-dark{
-  gap: 8px;
-}
-.pagination-dark .page-link{
-  margin-left: 0 !important; /* ยกเลิก margin เดิมของคุณ */
-  border-radius: 12px;
-  background: #15181d;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,.08);
-}
-.pagination-dark .page-item.active .page-link{
-  background: #2ecc71;
-  border-color: rgba(0,0,0,.0);
-}
-.pagination-dark .page-item.disabled .page-link{
-  opacity: .35;
-}
-  </style>
 </head>
 <body>
 
@@ -489,8 +350,7 @@ $products = $stmt->fetchAll();
         <i class="bi bi-shop fs-5"></i>
       </div>
       <div>
-        <div class="fw-semibold">Bakery Admin</div>
-        <div class="text-muted small">Backpage • สมูทขึ้น + อัปโหลดรูปจริง</div>
+        <div class="fw-semibold">HokKao(69)Bakery Admin</div>
       </div>
     </div>
 
@@ -513,40 +373,8 @@ $products = $stmt->fetchAll();
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
       <div>
         <div class="fw-semibold fs-5">จัดการข้อมูล</div>
-        <div class="text-muted small">เพิ่ม • แก้ไข • ลบ • ค้นหา • ยืนยันด้วย Toast</div>
       </div>
-
-        <ul class="nav nav-pills gap-2">
-        <li class="nav-item">
-            <a class="nav-link <?= $currentPage==="backpage_products.php" ? "active" : "" ?>" href="backpage_products.php?page=1">
-            <i class="bi bi-bag-heart me-1"></i> สินค้า
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link <?= $currentPage==="backpage_categories.php" ? "active" : "" ?>" href="backpage_categories.php?page=1">
-            <i class="bi bi-tags me-1"></i> ประเภทสินค้า
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link <?= $currentPage==="backpage_orders.php" ? "active" : "" ?>" href="backpage_orders.php?page=1">
-            <i class="bi bi-receipt me-1"></i> ออเดอร์
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link <?= $currentPage==="backpage_customers.php" ? "active" : "" ?>" href="backpage_customers.php?page=1">
-            <i class="bi bi-people me-1"></i> ลูกค้า
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link <?= $currentPage==="backpage_admins.php" ? "active" : "" ?>" href="backpage_admins.php?page=1">
-            <i class="bi bi-shield-lock me-1"></i> แอดมิน
-            </a>
-        </li>
-        </ul>
+        <?php require __DIR__ . "/partials/admin_nav.php"; ?>
     </div>
 
     <hr class="my-2">
@@ -581,7 +409,7 @@ $products = $stmt->fetchAll();
           <tr>
             <th style="width: 70px;">ID</th>
             <th style="width: 70px;">รูป</th>
-            <th>ชื่อสินค้า</th>
+            <th >ชื่อสินค้า</th>
             <th style="width: 180px;">ประเภท</th>
             <th style="width: 120px;">ราคา</th>
             <th style="width: 100px;">สต็อก</th>
@@ -666,7 +494,7 @@ $products = $stmt->fetchAll();
   </div>
 
   <div class="text-center text-muted small mt-4">
-    <i class="bi bi-shield-lock me-1"></i> Admin Panel • Upload Image • Smooth UI
+    <i class="bi bi-shield-lock me-1"></i> Admin Panel
   </div>
 </div>
 

@@ -10,31 +10,19 @@ $userId = (int)($u["id"] ?? 0);
 
 // --- filters
 $q  = trim((string)($_GET["q"] ?? ""));
-$st = trim((string)($_GET["status"] ?? ""));          // order status
-$ps = trim((string)($_GET["payment_status"] ?? ""));  // payment status
 
-$allowedSt = ["pending","confirmed","shipped","completed","cancelled"];
-$allowedPs = ["pending_verify","paid","rejected"];
-
-if ($st !== "" && !in_array($st, $allowedSt, true)) $st = "";
-if ($ps !== "" && !in_array($ps, $allowedPs, true)) $ps = "";
 
 // --- build SQL
-$where = ["user_id = :uid"];
+$where = [
+  "user_id = :uid",
+  "status = 'completed'"   // 👈 เพิ่มบรรทัดนี้
+];
 $params = [":uid" => $userId];
 
 if ($q !== "") {
   // รองรับค้นหาเลขออเดอร์/ชื่อ/เบอร์
   $where[] = "(order_no LIKE :q OR customer_name LIKE :q OR customer_phone LIKE :q)";
   $params[":q"] = "%" . $q . "%";
-}
-if ($st !== "") {
-  $where[] = "status = :st";
-  $params[":st"] = $st;
-}
-if ($ps !== "") {
-  $where[] = "payment_status = :ps";
-  $params[":ps"] = $ps;
 }
 
 $sql = "
@@ -71,11 +59,12 @@ function statusBadge(string $status): string {
   };
 }
 function paymentBadge(string $status): string {
+  $status = strtolower(trim($status));
   return match ($status) {
-    "pending_verify" => '<span class="badge bg-warning text-dark">รอตรวจสลิป</span>',
-    "paid" => '<span class="badge bg-success">ชำระแล้ว</span>',
-    "rejected" => '<span class="badge bg-danger">สลิปไม่ถูกต้อง</span>',
-    default => '<span class="badge bg-secondary">ไม่ทราบ</span>'
+    "pending_verify"     => '<span class="badge bg-warning text-dark">รอตรวจสลิป</span>',
+    "verified", "paid"   => '<span class="badge bg-success">ยืนยันแล้ว</span>',
+    "rejected"           => '<span class="badge bg-danger">สลิปไม่ถูกต้อง</span>',
+    default              => '<span class="badge bg-secondary">ไม่ทราบ</span>'
   };
 }
 function slipUrl(?string $url): string {
@@ -124,7 +113,26 @@ function slipUrl(?string $url): string {
   }
   .acc-btn{ background:transparent; border:0; padding:0; width:100%; text-align:left; }
   .acc-head{ padding:14px 16px; }
-  .table > :not(caption) > * > *{ padding:.65rem .75rem; }
+  .table > :not(caption) > * > *{ padding:.65rem .75rem; 
+  }
+  .search-pill{
+  width: 560px;
+  max-width: 65vw;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:999px;
+  background:#fff;
+  padding:.35rem .5rem;
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+  }
+  .search-pill .form-control{
+    box-shadow:none !important;
+  }
+  .search-pill .form-control:focus{
+    box-shadow:none !important;
+  }
+  .search-pill .btn{
+    box-shadow:none !important;
+  }
 </style>
 </head>
 <body>
@@ -144,49 +152,33 @@ function slipUrl(?string $url): string {
     </a>
   </div>
 
-  <!-- Filters -->
-  <div class="card-soft p-3 p-md-4 mb-3">
-    <form method="get" class="row g-2 align-items-end">
-      <div class="col-12 col-md-6">
-        <label class="form-label mb-1">ค้นหา</label>
-        <input class="form-control"
-               name="q"
-               value="<?= htmlspecialchars($q) ?>"
-               placeholder="เลขออเดอร์ / ชื่อผู้รับ / เบอร์โทร">
-      </div>
+<div class="mb-4 d-flex justify-content-end">
+  <form method="get" class="d-flex align-items-center">
+    <div class="input-group search-pill">
+      <span class="input-group-text bg-transparent border-0">
+        <i class="bi bi-search"></i>
+      </span>
 
-      <div class="col-6 col-md-3">
-        <label class="form-label mb-1">สถานะออเดอร์</label>
-        <select class="form-select" name="status">
-          <option value="">ทั้งหมด</option>
-          <?php foreach (["pending","confirmed","shipped","completed","cancelled"] as $x): ?>
-            <option value="<?= $x ?>" <?= $st===$x?"selected":"" ?>>
-              <?= htmlspecialchars(statusText($x)) ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
+      <input id="searchInput"
+             name="q"
+             value="<?= htmlspecialchars($q) ?>"
+             class="form-control border-0 bg-transparent"
+             placeholder="เลขออเดอร์ / ชื่อผู้รับ / เบอร์โทร">
 
-      <div class="col-6 col-md-3">
-        <label class="form-label mb-1">สถานะชำระเงิน</label>
-        <select class="form-select" name="payment_status">
-          <option value="">ทั้งหมด</option>
-          <option value="pending_verify" <?= $ps==="pending_verify"?"selected":"" ?>>รอตรวจสลิป</option>
-          <option value="paid" <?= $ps==="paid"?"selected":"" ?>>ชำระแล้ว</option>
-          <option value="rejected" <?= $ps==="rejected"?"selected":"" ?>>สลิปไม่ถูกต้อง</option>
-        </select>
-      </div>
-
-      <div class="col-12 d-flex gap-2">
-        <button class="btn btn-dark rounded-pill px-4" type="submit">
-          <i class="bi bi-search me-1"></i> ค้นหา
+      <!-- ปุ่มล้าง (กากบาท) -->
+      <?php if ($q !== ""): ?>
+        <button type="button" id="clearBtn"
+                class="btn border-0 bg-transparent text-muted px-2">
+          <i class="bi bi-x-lg"></i>
         </button>
-        <a class="btn btn-outline-secondary rounded-pill px-4" href="orders_history.php">
-          ล้างตัวกรอง
-        </a>
-      </div>
-    </form>
-  </div>
+      <?php endif; ?>
+
+      <button class="btn btn-dark rounded-pill px-4 ms-2" type="submit">
+        ค้นหา
+      </button>
+    </div>
+  </form>
+</div>
 
   <?php if (!$orders): ?>
     <div class="alert alert-light border rounded-4 text-center py-5">
@@ -306,5 +298,16 @@ function slipUrl(?string $url): string {
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const clearBtn = document.getElementById("clearBtn");
+const input = document.getElementById("searchInput");
+
+if (clearBtn) {
+  clearBtn.addEventListener("click", function() {
+    input.value = "";
+    window.location.href = "orders_history.php";
+  });
+}
+</script>
 </body>
 </html>

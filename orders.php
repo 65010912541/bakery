@@ -19,9 +19,12 @@ $stmt->execute([":uid" => $userId]);
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 function statusBadge(string $status): string {
+  $status = strtolower(trim($status));
+  if ($status === "") $status = "pending";
+
   return match ($status) {
     "pending" => '<span class="badge bg-secondary">รอดำเนินการ</span>',
-    "confirmed" => '<span class="badge bg-info text-dark">ยืนยันแล้ว</span>',
+    "confirmed" => '<span class="badge bg-info text-dark">ยืนยันออเดอร์</span>',
     "shipped" => '<span class="badge bg-primary">จัดส่งแล้ว</span>',
     "completed" => '<span class="badge bg-success">สำเร็จ</span>',
     "cancelled" => '<span class="badge bg-danger">ยกเลิก</span>',
@@ -30,9 +33,10 @@ function statusBadge(string $status): string {
 }
 
 function paymentBadge(string $status): string {
+  $status = strtolower(trim($status));
   return match ($status) {
     "pending_verify" => '<span class="badge bg-warning text-dark">รอตรวจสลิป</span>',
-    "paid" => '<span class="badge bg-success">ชำระแล้ว</span>',
+    "verified", "paid" => '<span class="badge bg-success">ยืนยันแล้ว</span>',
     "rejected" => '<span class="badge bg-danger">สลิปไม่ถูกต้อง</span>',
     default => '<span class="badge bg-secondary">ไม่ทราบ</span>'
   };
@@ -58,6 +62,9 @@ function slipUrl(?string $url): string {
  * - step4: completed
  */
 function buildSteps(string $orderStatus, string $payStatus): array {
+  $orderStatus = strtolower(trim($orderStatus));
+  $payStatus   = strtolower(trim($payStatus));
+
   // index 1..4
   $steps = [
     1 => ["title" => "รอตรวจสลิป", "desc" => "แนบสลิปและรอตรวจสอบ", "state" => "todo"],
@@ -66,25 +73,34 @@ function buildSteps(string $orderStatus, string $payStatus): array {
     4 => ["title" => "สำเร็จ", "desc" => "รับสินค้าเรียบร้อย", "state" => "todo"],
   ];
 
+  // ถ้า order ถูกยกเลิก -> fail ทั้งหมด
   if ($orderStatus === "cancelled") {
-    // ทุกขั้น fail
     foreach ($steps as $k => $v) $steps[$k]["state"] = "fail";
     return $steps;
   }
 
-  // Step1
+  // ===== Step1: ตรวจสลิป =====
   if ($payStatus === "rejected") {
     $steps[1]["state"] = "fail";
     return $steps;
   }
-  if ($payStatus === "paid") {
+
+  // ✅ ผ่านตรวจสลิปแล้ว: verified หรือ paid
+  if ($payStatus === "verified" || $payStatus === "paid") {
     $steps[1]["state"] = "done";
   } else {
-    $steps[1]["state"] = "doing"; // pending_verify
+    // ยังไม่ผ่าน (เช่น pending_verify หรือค่าว่าง)
+    $steps[1]["state"] = "doing";
     return $steps;
   }
 
-  // Step2+
+  // ===== Step2-4: ตาม status ของออเดอร์ =====
+  // กันกรณี status ว่าง/NULL
+  if ($orderStatus === "" || $orderStatus === "pending") {
+    $steps[2]["state"] = "doing";
+    return $steps;
+  }
+
   if ($orderStatus === "confirmed") {
     $steps[2]["state"] = "done";
     $steps[3]["state"] = "doing";
@@ -105,11 +121,10 @@ function buildSteps(string $orderStatus, string $payStatus): array {
     return $steps;
   }
 
-  // pending (แต่จ่ายแล้ว)
+  // ค่าอื่น ๆ ที่ไม่รู้จัก -> ถือว่าอยู่ step2 doing
   $steps[2]["state"] = "doing";
   return $steps;
 }
-
 ?>
 <!doctype html>
 <html lang="th">
@@ -122,77 +137,8 @@ function buildSteps(string $orderStatus, string $payStatus): array {
 <link rel="stylesheet" href="assets/css/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="assets/css/order-stepper.css">
 
-<style>
-  /* Card */
-  .order-card{
-    border: 1px solid rgba(0,0,0,.06);
-    border-radius: 18px;
-    overflow: hidden;
-    background: #fff;
-    box-shadow: 0 10px 25px rgba(0,0,0,.05);
-  }
-  .order-head{
-    padding: 14px 16px;
-    background: rgba(255,255,255,.7);
-  }
-  .order-meta{
-    display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
-  }
-  .order-no{ font-weight: 700; }
-  .order-sub{ color: rgba(0,0,0,.55); font-size: .9rem; }
-
-  /* Stepper */
-  .stepper{
-    display:grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-top: 12px;
-  }
-  .step{
-    position: relative;
-    padding: 12px 12px 12px 14px;
-    border-radius: 16px;
-    border: 1px solid rgba(0,0,0,.06);
-    background: rgba(0,0,0,.02);
-    min-height: 74px;
-  }
-  .step::before{
-    content:"";
-    position:absolute;
-    left: 12px; top: 14px;
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: rgba(0,0,0,.25);
-  }
-  .step-title{ font-weight: 700; font-size:.95rem; padding-left: 14px; }
-  .step-desc{ font-size:.82rem; color: rgba(0,0,0,.55); padding-left: 14px; margin-top: 3px; }
-
-  /* state colors */
-  .step.done{ background: rgba(25,135,84,.08); border-color: rgba(25,135,84,.20); }
-  .step.done::before{ background: #198754; }
-
-  .step.doing{ background: rgba(13,110,253,.08); border-color: rgba(13,110,253,.20); }
-  .step.doing::before{ background: #0d6efd; }
-
-  .step.fail{ background: rgba(220,53,69,.08); border-color: rgba(220,53,69,.20); }
-  .step.fail::before{ background: #dc3545; }
-
-  /* accordion button custom */
-  .acc-btn{
-    width:100%;
-    text-align:left;
-    background: transparent;
-    border:0;
-    padding:0;
-  }
-  .order-body{
-    padding: 16px;
-    border-top: 1px solid rgba(0,0,0,.06);
-  }
-
-  .table > :not(caption) > * > *{ padding: .65rem .75rem; }
-</style>
 </head>
 <body>
 
@@ -255,11 +201,24 @@ function buildSteps(string $orderStatus, string $payStatus): array {
                   </div>
 
                   <!-- Stepper -->
-                  <div class="stepper">
-                    <?php foreach ($steps as $s): ?>
-                      <div class="step <?= htmlspecialchars($s["state"]) ?>">
-                        <div class="step-title"><?= htmlspecialchars($s["title"]) ?></div>
-                        <div class="step-desc"><?= htmlspecialchars($s["desc"]) ?></div>
+                 <div class="tstepper">
+                    <?php foreach ($steps as $idx => $s): ?>
+                      <?php
+                        // เลือกไอคอนตามขั้น
+                        $icon = match ((int)$idx) {
+                          1 => "bi-receipt",
+                          2 => "bi-check2-circle",
+                          3 => "bi-truck",
+                          4 => "bi-bag-check",
+                          default => "bi-dot"
+                        };
+                      ?>
+                      <div class="tstep <?= htmlspecialchars($s["state"]) ?>">
+                        <div class="ticon"><i class="bi <?= $icon ?>"></i></div>
+                        <div class="ttext">
+                          <div class="ttitle"><?= htmlspecialchars($s["title"]) ?></div>
+                          <div class="tdesc"><?= htmlspecialchars($s["desc"]) ?></div>
+                        </div>
                       </div>
                     <?php endforeach; ?>
                   </div>

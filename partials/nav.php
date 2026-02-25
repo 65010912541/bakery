@@ -68,7 +68,7 @@ declare(strict_types=1);
 
               <li>
                 <a class="dropdown-item" href="orders.php">
-                  <i class="bi bi-truck me-2"></i> ติดตามสถานะ
+                  <i class="bi bi-truck me-2"></i> คำสั่งซื้อของฉัน
                 </a>
               </li>
 

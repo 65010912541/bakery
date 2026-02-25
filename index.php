@@ -195,12 +195,13 @@ $placeholder = "https://images.unsplash.com/photo-1542826438-bd32f43d626f?auto=f
                         type="button"
                         <?= $outOfStock ? "disabled" : "" ?>
                         onclick="openAddModal(
-                        <?= (int)$p['id'] ?>,
-                        '<?= htmlspecialchars($p['name'], ENT_QUOTES) ?>',
-                        <?= (float)$p['price'] ?>,
-                        <?= (int)$p['stock'] ?>
+                          <?= (int)$p['id'] ?>,
+                          '<?= htmlspecialchars($p['name'], ENT_QUOTES) ?>',
+                          <?= (float)$p['price'] ?>,
+                          <?= (int)$p['stock'] ?>,
+                          '<?= htmlspecialchars($img, ENT_QUOTES) ?>'
                         )">
-                สั่งเมนูนี้
+                  สั่งเมนูนี้
                 </button>
               </div>
             </div>
@@ -235,23 +236,42 @@ $placeholder = "https://images.unsplash.com/photo-1542826438-bd32f43d626f?auto=f
 
 <!-- Add to Cart Modal (เลือกจำนวน/หมายเหตุ) -->
 <div class="modal fade" id="addCartModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:540px;">
+    <div class="modal-content rounded-4 overflow-hidden">
 
       <div class="modal-header border-0">
-        <div>
-          <div class="text-muted small">เพิ่มลงตะกร้า</div>
-          <h5 class="modal-title fw-semibold mb-0" id="addCartTitle">สินค้า</h5>
+        <div class="w-100">
+
+          <!-- บรรทัดบน -->
+          <div class="text-muted small mb-1">
+            เพิ่มลงตะกร้า
+          </div>
+
+          <!-- บรรทัดชื่อ + คงเหลือ -->
+          <div class="d-flex align-items-center gap-3">
+            <h5 class="modal-title fw-semibold mb-0" id="addCartTitle">
+              สินค้า
+            </h5>
+
+            <div class="small text-muted" id="addCartHint">
+              คงเหลือ 0 ชิ้น
+            </div>
+          </div>
+
         </div>
+
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body pt-0">
+
+        <!-- ✅ ราคา/ชิ้น -->
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div class="text-muted">ราคา/ชิ้น</div>
           <div class="fw-bold" id="addCartPrice">0 ฿</div>
         </div>
 
+        <!-- ✅ จำนวนที่ต้องการสั่ง -->
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div class="text-muted">จำนวน</div>
           <div class="d-flex align-items-center gap-2">
@@ -261,23 +281,26 @@ $placeholder = "https://images.unsplash.com/photo-1542826438-bd32f43d626f?auto=f
           </div>
         </div>
 
+        <!-- ✅ หมายเหตุ -->
         <div class="mb-2">
           <label class="form-label text-muted">หมายเหตุ (ถ้ามี)</label>
-          <textarea class="form-control" id="addCartNote" rows="2" placeholder="เช่น ไม่หวาน, ไม่ใส่ถั่ว, แพ็กแยกชิ้น"></textarea>
+          <textarea class="form-control" id="addCartNote" rows="2"
+                    placeholder="เช่น ไม่หวาน, ไม่ใส่ถั่ว, แพ็กแยกชิ้น"></textarea>
         </div>
 
+        <!-- ✅ รวม -->
         <div class="d-flex justify-content-between align-items-center mt-3">
           <div class="text-muted">รวม</div>
           <div class="fw-bold" id="addCartLineTotal">0 บาท</div>
         </div>
 
+        <!-- ✅ ปุ่มยืนยัน -->
         <div class="d-grid mt-3">
           <button type="button" class="btn btn-brand" id="confirmAddBtn" onclick="confirmAddToCart()">
             ยืนยันเพิ่มลงตะกร้า
           </button>
         </div>
 
-        <div class="small text-muted mt-2" id="addCartHint"></div>
       </div>
 
     </div>
@@ -287,12 +310,12 @@ $placeholder = "https://images.unsplash.com/photo-1542826438-bd32f43d626f?auto=f
 
 <footer class="footer-shop py-4">
   <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
-    <div>© <?= date("Y") ?> Bakery</div>
-    <div class="text-muted">Minimal • Shop UI • Bootstrap 5 • MySQL</div>
+    <div>© <?= date("Y") ?> HokKao (69) Bakery</div>
   </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Toast container (Top Right) -->
 <script>
 /* ---------------------------
    Product Modal (ของเดิมคุณ)
@@ -336,8 +359,7 @@ updateCartBadge();
 /* เก็บสินค้าที่กำลังจะเพิ่ม (จาก modal) */
 let pendingItem = null;
 
-function openAddModal(id, name, price, stock) {
-  // กัน stock
+function openAddModal(id, name, price, stock, imageUrl) {
   stock = Number(stock);
   if (!Number.isFinite(stock) || stock <= 0) return;
 
@@ -345,12 +367,21 @@ function openAddModal(id, name, price, stock) {
     id: Number(id),
     name: String(name ?? "").trim() || "สินค้า",
     price: Number(price) || 0,
-    stock
+    stock,
+    imageUrl: String(imageUrl ?? "").trim()
   };
 
-  // set UI
+  // set ชื่อ + รูป
   document.getElementById("addCartTitle").textContent = pendingItem.name;
-  document.getElementById("addCartPrice").textContent = pendingItem.price.toLocaleString() + " ฿";
+
+  const imgEl = document.getElementById("addCartImg");
+  if (imgEl) {
+    imgEl.src = pendingItem.imageUrl || "";
+    imgEl.alt = pendingItem.name;
+  }
+
+  document.getElementById("addCartPrice").textContent =
+    pendingItem.price.toLocaleString() + " ฿";
 
   const qtyEl = document.getElementById("addCartQty");
   qtyEl.min = "1";
@@ -364,6 +395,10 @@ function openAddModal(id, name, price, stock) {
 
   const modal = new bootstrap.Modal(document.getElementById("addCartModal"));
   modal.show();
+}
+
+function escapeHtmlAttr(s) {
+  return escapeHtml(s).replace(/`/g, "&#096;");
 }
 
 function stepQty(delta) {
@@ -405,10 +440,7 @@ function confirmAddToCart() {
   const max = Number(qtyEl.max || pendingItem.stock);
 
   if (!Number.isFinite(qty) || qty < 1) qty = 1;
-  if (qty > max) {
-    qty = max;
-    qtyEl.value = max;
-  }
+  if (qty > max) qty = max;
 
   const note = String(noteEl.value ?? "").trim();
 

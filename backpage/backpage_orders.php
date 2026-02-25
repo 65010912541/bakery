@@ -7,7 +7,6 @@ if (empty($_SESSION["admin"]["id"])) {
   exit;
 }
 require __DIR__ . "/../config/db.php";
-// require __DIR__ . "/../config/auth.php"; // ถ้ามี
 
 $currentPage = basename($_SERVER["PHP_SELF"]);
 function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, "UTF-8"); }
@@ -94,22 +93,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
   try {
     if ($action === "update_status") {
-      $id = (int)($_POST["id"] ?? 0);
-      $status = (string)($_POST["status"] ?? "pending");
+    $id = (int)($_POST["id"] ?? 0);
+    $step = (string)($_POST["step"] ?? "step2"); // เริ่มจาก step2 เพราะ verified แล้ว
 
-      if ($id <= 0) {
-        flash("danger", "ไม่พบ ID ออเดอร์");
-        redirect_to($page);
-      }
-
-      $allow = ["pending","paid","cancelled","completed"];
-      if (!in_array($status, $allow, true)) $status = "pending";
-
-      $pdo->prepare("UPDATE orders SET status=? WHERE id=?")->execute([$status, $id]);
-
-      flash("success", "อัปเดตสถานะเรียบร้อย");
+    if ($id <= 0) {
+      flash("danger", "ไม่พบ ID ออเดอร์");
       redirect_to($page);
     }
+
+    $step = trim((string)($_POST["step"] ?? "step2"));
+
+    // verified แล้ว → เลือกได้เฉพาะขั้นของออเดอร์
+    $map = [
+      "step2"     => "confirmed",  // ยืนยันออเดอร์
+      "step3"     => "shipped",    // จัดส่ง
+      "step4"     => "completed",  // สำเร็จ
+      "cancelled" => "cancelled",  // ยกเลิก
+    ];
+    
+
+    if (!isset($map[$step])) $step = "step2";
+    $newStatus = $map[$step];
+
+    $pdo->prepare("UPDATE orders SET status=? WHERE id=?")->execute([$newStatus, $id]);
+
+    flash("success", "อัปเดตสถานะออเดอร์เรียบร้อย");
+    redirect_to($page);
+  }
 
     if ($action === "delete") {
       $id = (int)($_POST["id"] ?? 0);
@@ -127,48 +137,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       redirect_to($page);
     }
 
-    if ($action === "verify_slip") {
-    $id = (int)($_POST["id"] ?? 0);
-    $newPayStatus = (string)($_POST["payment_status"] ?? "pending_verify");
-    $vnote = trim((string)($_POST["verified_note"] ?? ""));
-
-    if ($id <= 0) {
-        flash("danger", "ไม่พบ ID ออเดอร์");
-        redirect_to($page);
-    }
-
-    $allowPay = ["pending_verify","verified","rejected"];
-    if (!in_array($newPayStatus, $allowPay, true)) $newPayStatus = "pending_verify";
-
-        // ใช้ชื่อแอดมินคนที่ล็อกอินอยู่ "ตอนนี้" จาก DB เสมอ
-        $adminId = (int)($_SESSION["admin"]["id"] ?? 0);
-
-        $adminName = "";
-        if ($adminId > 0) {
-        $stmtAdmin = $pdo->prepare("SELECT full_name, username FROM admins WHERE id=? LIMIT 1");
-        $stmtAdmin->execute([$adminId]);
-        $adminRow = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
-
-        $adminName = trim((string)($adminRow["full_name"] ?? ""));
-        if ($adminName === "") {
-            $adminName = trim((string)($adminRow["username"] ?? ""));
-        }
-        }
-        if ($adminName === "") $adminName = "admin";
-
-    $pdo->prepare("
-        UPDATE orders
-        SET payment_status=?,
-            verified_by_admin=?,
-            verified_at=NOW(),
-            verified_note=?
-        WHERE id=?
-    ")->execute([$newPayStatus, $adminName, ($vnote !== "" ? $vnote : null), $id]);
-
-    flash("success", "บันทึกการตรวจสอบสลิปเรียบร้อย");
-    redirect_to($page);
-    }
-
     flash("warning", "ไม่พบคำสั่งที่ร้องขอ");
     redirect_to($page);
 
@@ -181,18 +149,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 /* =======================
    FETCH DATA + PAGINATION
+   ✅ แสดงเฉพาะ payment_status = verified
 ======================= */
-$totalOrders = (int)$pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+$totalOrdersStmt = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE payment_status='verified'");
+$totalOrdersStmt->execute();
+$totalOrders = (int)$totalOrdersStmt->fetchColumn();
+
 $totalPages = max(1, (int)ceil($totalOrders / $perPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
 $stmt = $pdo->prepare("
   SELECT id, order_no, customer_name, customer_phone, customer_address, note,
-         total_qty, total_amount, status, created_at,
-         payment_method, payment_status, payment_slip_url,
-         verified_by_admin, verified_at, verified_note
+         total_qty, total_amount, status, payment_status
   FROM orders
+  WHERE payment_status='verified'
   ORDER BY id DESC
   LIMIT :lim OFFSET :off
 ");
@@ -217,7 +188,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
   <style>
     body { background: #f6f7fb; font-family: "Kanit", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Thai", sans-serif; }
-    .app-shell { max-width: 1500px; } /* กว้างขึ้นเหมือนที่คุณปรับ */
+    .app-shell { max-width: 1500px; }
     .brand-badge { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 16px; }
     .card { border: 0; border-radius: 18px; box-shadow: 0 10px 25px rgba(15, 23, 42, .06); }
     .nav-pills .nav-link { border-radius: 14px; }
@@ -288,20 +259,19 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <i class="bi bi-shop fs-5"></i>
       </div>
       <div>
-        <div class="fw-semibold">Bakery Admin</div>
-        <div class="text-muted small">Backpage • ออเดอร์ + ดูรายละเอียดแบบ Live</div>
+        <div class="fw-semibold">HokKao(69)Bakery Admin</div>
       </div>
     </div>
 
     <div class="d-flex gap-2">
-        <?php
+      <?php
         $adminDisplay = trim((string)($_SESSION["admin"]["full_name"] ?? ""));
         if ($adminDisplay === "") $adminDisplay = trim((string)($_SESSION["admin"]["username"] ?? "Admin"));
-        ?>
+      ?>
 
-        <span class="btn btn-outline-dark disabled">
+      <span class="btn btn-outline-dark disabled">
         <i class="bi bi-person-circle me-1"></i> <?= h($adminDisplay) ?>
-        </span>
+      </span>
       <a class="btn btn-outline-secondary" href="..admin_login.php">
         <i class="bi bi-box-arrow-right me-1"></i> ออกจากระบบ
       </a>
@@ -312,41 +282,12 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
       <div>
         <div class="fw-semibold fs-5">จัดการข้อมูล</div>
-        <div class="text-muted small">แก้ไขสถานะ • ลบ • ค้นหา • ดูรายละเอียดด้วย Live Modal</div>
       </div>
-
-      <ul class="nav nav-pills gap-2">
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_products.php" ? "active" : "" ?>" href="backpage_products.php?page=1">
-            <i class="bi bi-bag-heart me-1"></i> สินค้า
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_categories.php" ? "active" : "" ?>" href="backpage_categories.php?page=1">
-            <i class="bi bi-tags me-1"></i> ประเภทสินค้า
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_orders.php" ? "active" : "" ?>" href="backpage_orders.php?page=1">
-            <i class="bi bi-receipt me-1"></i> ออเดอร์
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_customers.php" ? "active" : "" ?>" href="backpage_customers.php?page=1">
-            <i class="bi bi-people me-1"></i> ลูกค้า
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_admins.php" ? "active" : "" ?>" href="backpage_admins.php?page=1">
-            <i class="bi bi-shield-lock me-1"></i> แอดมิน
-          </a>
-        </li>
-      </ul>
+        <?php require __DIR__ . "/partials/admin_nav.php"; ?>
     </div>
 
     <hr class="my-2">
 
-    <!-- TOOLBAR: แสดงจำนวน + ค้นหา (ไม่มีปุ่มเพิ่ม) -->
     <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mt-3">
       <div class="text-muted small">
         แสดง <span class="chip bg-light border" id="ordCount"><?= count($orders) ?></span> รายการ
@@ -374,12 +315,10 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <th style="width: 180px;">Order No</th>
             <th>ลูกค้า และที่อยู่</th>
             <th style="width: 140px;">เบอร์</th>
-            <th style="width: 50px;" class="text-end">จำนวน</th>
+            <th style="width: 90px;" class="text-end">จำนวน</th>
             <th style="width: 140px;" class="text-end">ยอดรวม</th>
-            <th style="width: 150px;">สถานะ</th>
-            <th style="width: 150px;">สร้างเมื่อ</th>
-            <th style="width: 160px;">ตรวจโดย</th>
-            <th style="width: 160px;">หมายเหตุ</th>
+            <th style="width: 170px;">ผลตรวจสอบสลิป</th>
+            <th style="width: 200px;">สถานะ</th>
             <th style="width: 180px;" class="text-end">จัดการ</th>
           </tr>
         </thead>
@@ -405,43 +344,66 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php endif; ?>
               </td>
               <td class="text-muted"><?= h((string)$o["customer_phone"]) ?></td>
-              <td class="text-end"><?= (int)$o["total_qty"] ?></td>
-              <td class="text-end"><?= number_format((float)$o["total_amount"], 2) ?></td>
-              <td>
-                <?php if ($st === "paid"): ?>
-                  <span class="chip bg-success-subtle text-success border border-success-subtle">
-                    <i class="bi bi-check-circle me-1"></i> paid
-                  </span>
-                <?php elseif ($st === "pending"): ?>
-                  <span class="chip bg-warning-subtle text-warning border">
-                    <i class="bi bi-clock-history me-1"></i> pending
-                  </span>
-                <?php elseif ($st === "cancelled"): ?>
-                  <span class="chip bg-danger-subtle text-danger border">
-                    <i class="bi bi-x-circle me-1"></i> cancelled
-                  </span>
-                <?php else: ?>
-                  <span class="chip bg-primary-subtle text-primary border">
-                    <i class="bi bi-bag-check me-1"></i> completed
-                  </span>
-                <?php endif; ?>
-              </td>
-              <td class="text-muted small"><?= h((string)$o["created_at"]) ?></td>
-                <td class="text-muted small">
-                <?= $o["verified_by_admin"] ? h((string)$o["verified_by_admin"]) : "-" ?>
-                <?php if (!empty($o["verified_at"])): ?>
-                    <div class="small text-muted">
-                    <?= h((string)$o["verified_at"]) ?>
-                    </div>
-                <?php endif; ?>
-                </td>
+                <td class="text-end"><?= (int)$o["total_qty"] ?></td>
+                <td class="text-end"><?= number_format((float)$o["total_amount"], 2) ?></td>
 
-                <td class="small">
-                <?= !empty($o["verified_note"]) ? h((string)$o["verified_note"]) : "-" ?>
+                <?php
+                  // payment_status ของหน้านี้จะเป็น verified ทั้งหมดอยู่แล้ว
+                  $ps = (string)($o["payment_status"] ?? "");
+                  if ($ps === "verified") {
+                    $psLabel = "ยืนยันแล้ว";
+                    $psClass = "bg-success-subtle text-success border border-success-subtle";
+                    $psIcon  = "bi-check2-circle";
+                  } else {
+                    $psLabel = "-";
+                    $psClass = "bg-light text-muted border";
+                    $psIcon  = "bi-dash-circle";
+                  }
+                ?>
+                <td>
+                  <span class="chip <?= h($psClass) ?>">
+                    <i class="bi <?= h($psIcon) ?> me-1"></i> <?= h($psLabel) ?>
+                  </span>
                 </td>
+              <td>
+                <?php
+                // เอาค่าจริงจาก DB
+                $st = strtolower(trim((string)($o["status"] ?? "")));
+
+                // ถ้า status ว่าง ให้ถือเป็น step2 (รอยืนยันออเดอร์) หรือ pending ตาม stepper
+                  if ($st === "") $st = "pending";
+
+                  // Map สถานะ -> label ตาม Stepper
+                  if ($st === "cancelled") {
+                    $label = "ยกเลิก";
+                    $cls   = "bg-danger-subtle text-danger border";
+                    $icon  = "bi-x-circle";
+                  } elseif ($st === "completed") {
+                    $label = "Step 4: สำเร็จ";
+                    $cls   = "bg-success-subtle text-success border border-success-subtle";
+                    $icon  = "bi-bag-check";
+                  } elseif ($st === "shipped") {
+                    $label = "Step 3: จัดส่ง";
+                    $cls   = "bg-primary-subtle text-primary border";
+                    $icon  = "bi-truck";
+                  } elseif ($st === "confirmed") {
+                    $label = "Step 2: ยืนยันออเดอร์";
+                    $cls   = "bg-info-subtle text-dark border";
+                    $icon  = "bi-check2-circle";
+                  } else {
+                    // pending (หรือค่าอื่นที่ไม่รู้จัก) -> ให้ถือเป็นขั้นรอยืนยันออเดอร์
+                    $label = "Step 2: รอยืนยันออเดอร์";
+                    $cls   = "bg-warning-subtle text-warning border";
+                    $icon  = "bi-clock-history";
+                  }
+                ?>
+
+                <span class="chip <?= h($cls) ?>">
+                  <i class="bi <?= h($icon) ?> me-1"></i> <?= h($label) ?>
+                </span>
+              </td>
 
               <td class="text-end">
-                <!-- ดูรายละเอียด Live -->
                 <button
                   class="btn btn-outline-primary btn-sm js-view"
                   data-id="<?= (int)$o["id"] ?>"
@@ -453,54 +415,11 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                   data-total_qty="<?= h((string)$o["total_qty"]) ?>"
                   data-total_amount="<?= h((string)$o["total_amount"]) ?>"
                   data-status="<?= h((string)$o["status"]) ?>"
-                  data-created_at="<?= h((string)$o["created_at"]) ?>"
-                  title="ดูรายละเอียด"
+                  title="ดูรายละเอียด / แก้สถานะ"
                 >
                   <i class="bi bi-eye"></i>
                 </button>
 
-<?php
-$slip = trim((string)($o["payment_slip_url"] ?? ""));
-$slipUrl = "";
-
-if ($slip !== "") {
-  // ถ้าเก็บเป็น URL เต็ม/absolute เช่น http... หรือ /project/... ให้ใช้เลย
-  if (preg_match('~^https?://~i', $slip) || str_starts_with($slip, "/")) {
-    $slipUrl = $slip;
-  } else {
-    // ถ้าเก็บเป็นชื่อไฟล์ หรือ path ย่อย ให้บังคับไปที่โฟลเดอร์ slips
-    $slipFile = basename($slip);
-    $slipUrl = "/project/assets/uploads/slips/" . $slipFile;
-  }
-}
-?>
-<button
-  class="btn btn-outline-secondary btn-sm js-slip"
-  <?= $slipUrl === "" ? "disabled" : "" ?>
-  data-id="<?= (int)$o["id"] ?>"
-  data-order_no="<?= h((string)$o["order_no"]) ?>"
-  data-slip_url="<?= h($slipUrl) ?>"
-  data-payment_status="<?= h((string)$o["payment_status"]) ?>"
-  data-verified_by="<?= h((string)($o["verified_by_admin"] ?? "")) ?>"
-  data-verified_at="<?= h((string)($o["verified_at"] ?? "")) ?>"
-  data-verified_note="<?= h((string)($o["verified_note"] ?? "")) ?>"
->
-  <i class="bi bi-receipt"></i>
-</button>
-
-                <!-- แก้สถานะ -->
-                <button
-                  class="btn btn-outline-dark btn-sm"
-                  data-bs-toggle="modal"
-                  data-bs-target="#modalOrderStatus"
-                  data-id="<?= (int)$o["id"] ?>"
-                  data-status="<?= h((string)$o["status"]) ?>"
-                  title="แก้สถานะ"
-                >
-                  <i class="bi bi-pencil-square"></i>
-                </button>
-
-                <!-- ลบ -->
                 <button
                   class="btn btn-outline-danger btn-sm js-confirm"
                   data-id="<?= (int)$o["id"] ?>"
@@ -510,11 +429,12 @@ if ($slip !== "") {
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
+              </td>
             </tr>
           <?php endforeach; ?>
 
           <?php if (!count($orders)): ?>
-            <tr><td colspan="11" class="text-center text-muted py-4">ยังไม่มีออเดอร์</td></tr>
+            <tr><td colspan="9" class="text-center text-muted py-4">ยังไม่มีออเดอร์</td></tr>
           <?php endif; ?>
         </tbody>
       </table>
@@ -523,71 +443,42 @@ if ($slip !== "") {
   </div>
 
   <div class="text-center text-muted small mt-4">
-    <i class="bi bi-shield-lock me-1"></i> Admin Panel • Orders • Live Detail • Smooth UI
+    <i class="bi bi-shield-lock me-1"></i> Admin Panel
   </div>
 </div>
 
-<!-- Hidden delete form -->
 <form id="hiddenDeleteForm" method="post" class="d-none">
-  <input type="hidden" name="csrf" value="<?=h($csrf)?>">
+  <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
   <input type="hidden" name="action" value="delete">
   <input type="hidden" name="id" id="hd_id">
 </form>
 
-<!-- Modal: Update Status -->
-<div class="modal fade" id="modalOrderStatus" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <form class="modal-content" method="post">
-      <input type="hidden" name="csrf" value="<?=h($csrf)?>">
-      <input type="hidden" name="action" value="update_status">
-      <input type="hidden" name="id" id="st_id">
-
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>แก้สถานะออเดอร์</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <label class="form-label">สถานะ</label>
-        <select class="form-select" name="status" id="st_status">
-          <option value="pending">pending</option>
-          <option value="paid">paid</option>
-          <option value="cancelled">cancelled</option>
-          <option value="completed">completed</option>
-        </select>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">ยกเลิก</button>
-        <button class="btn btn-dark" type="submit"><i class="bi bi-check2 me-1"></i>บันทึก</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal: Order Detail (Live) -->
+<!-- ✅ เหลือแค่ Modal รายละเอียด (รวมอัปเดตสถานะไว้ในนี้) -->
 <div class="modal fade" id="modalOrderDetail" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content" style="border-radius:18px;">
+
       <div class="modal-header">
         <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>รายละเอียดออเดอร์</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
+      <!-- ✅ BODY: รายละเอียด + ตารางสินค้า -->
       <div class="modal-body">
+
         <div class="row g-2 small">
           <div class="col-md-6">
             <div><span class="text-muted">Order No:</span> <span class="fw-semibold" id="d_order_no">-</span></div>
             <div><span class="text-muted">ลูกค้า:</span> <span class="fw-semibold" id="d_customer">-</span></div>
             <div><span class="text-muted">เบอร์:</span> <span id="d_phone">-</span></div>
           </div>
+
           <div class="col-md-6">
             <div><span class="text-muted">สถานะ:</span> <span class="fw-semibold" id="d_status">-</span></div>
-            <div><span class="text-muted">สร้างเมื่อ:</span> <span id="d_created">-</span></div>
             <div><span class="text-muted">รวม:</span> <span class="fw-semibold" id="d_total">-</span></div>
           </div>
 
-          <div class="col-12">
+          <div class="col-12 mt-1">
             <div class="text-muted">ที่อยู่:</div>
             <div class="fw-semibold" id="d_address">-</div>
           </div>
@@ -598,7 +489,7 @@ if ($slip !== "") {
           </div>
         </div>
 
-        <hr>
+        <hr class="my-3">
 
         <div class="table-responsive">
           <table class="table table-sm align-middle mb-0">
@@ -615,80 +506,46 @@ if ($slip !== "") {
             </tbody>
           </table>
         </div>
-      </div>
 
-    </div>
-  </div>
-</div>
+        <hr class="my-3">
 
-<!-- Modal: Slip Verify -->
-<div class="modal fade" id="modalSlip" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content" style="border-radius:18px;">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-receipt me-2"></i> ตรวจสอบสลิป</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
+        <!-- ✅ อัปเดตสถานะ (อยู่ใน body ก็ได้ แต่จัดให้ชัดเจน) -->
+        <div class="fw-semibold mb-2">อัปเดตสถานะ:</div>
 
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-12">
-            <div class="small text-muted">Order No</div>
-            <div class="fw-semibold" id="slip_order_no">-</div>
-          </div>
+        <div class="d-flex flex-column flex-md-row gap-2 align-items-md-center">
+          <input type="hidden" id="d_id" value="">
 
-          <div class="col-12">
-            <div class="small text-muted mb-2">สลิป</div>
-            <div class="soft p-2 rounded-4 text-center">
-              <img id="slip_img" src="" alt="slip"
-                   style="max-width:100%; max-height:520px; border-radius:14px;">
-            </div>
-          </div>
+          <select class="form-select" id="d_step" style="max-width: 320px;">
+            <option value="step2">Step 2: ยืนยันออเดอร์</option>
+            <option value="step3">Step 3: จัดส่ง</option>
+            <option value="step4">Step 4: สำเร็จ</option>
+            <option value="cancelled">ยกเลิก</option>
+          </select>
 
-          <div class="col-md-6">
-            <label class="form-label">ผลตรวจสอบ</label>
-            <select class="form-select" id="slip_payment_status">
-              <option value="pending_verify">pending_verify</option>
-              <option value="verified">verified</option>
-              <option value="rejected">rejected</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">หมายเหตุ (ถ้ามี)</label>
-            <input class="form-control" id="slip_note" placeholder="เช่น สลิปไม่ชัด / ยอดไม่ตรง">
-          </div>
-
-          <div class="col-12">
-            <div class="text-muted small">
-              ตรวจสอบล่าสุดโดย:
-              <span class="fw-semibold" id="slip_verified_by">-</span>
-              <span class="ms-2" id="slip_verified_at"></span>
-            </div>
-          </div>
+          <button type="button" class="btn btn-dark" id="btnSaveStatus">
+            <i class="bi bi-check2 me-1"></i>บันทึก
+          </button>
         </div>
+
+        <!-- ✅ ฟอร์มจริงไว้ submit (ซ่อน) -->
+        <form method="post" id="frmUpdateStatus" class="d-none">
+          <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="update_status">
+          <input type="hidden" name="id" id="f_id">
+          <input type="hidden" name="step" id="f_step">
+        </form>
+
       </div>
 
+      <!-- ✅ footer -->
       <div class="modal-footer">
-        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">ปิด</button>
-        <button class="btn btn-dark" type="button" id="btnSaveSlip">
-          <i class="bi bi-check2 me-1"></i> บันทึกการตรวจ
-        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
       </div>
+
     </div>
   </div>
 </div>
 
-<!-- Hidden form: Submit verify slip -->
-<form id="slipForm" method="post" class="d-none">
-  <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-  <input type="hidden" name="action" value="verify_slip">
-  <input type="hidden" name="id" id="sf_id">
-  <input type="hidden" name="payment_status" id="sf_payment_status">
-  <input type="hidden" name="verified_note" id="sf_verified_note">
-</form>
-
-<!-- Toast -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1080;">
   <div id="resultToast" class="toast mt-3" role="alert" aria-live="polite" aria-atomic="true">
     <div class="toast-header bg-transparent border-0">
@@ -699,7 +556,6 @@ if ($slip !== "") {
   </div>
 </div>
 
-<!-- Confirm delete modal -->
 <div class="modal fade" id="confirmDeleteModal"
      data-bs-backdrop="static" data-bs-keyboard="false"
      tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
@@ -731,14 +587,9 @@ if ($slip !== "") {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // Fill status modal
-  document.getElementById('modalOrderStatus')?.addEventListener('show.bs.modal', e => {
-    const b = e.relatedTarget;
-    document.getElementById('st_id').value = b.getAttribute('data-id');
-    document.getElementById('st_status').value = b.getAttribute('data-status');
-  });
-
-  // Smooth search (เหมือนไฟล์อื่น)
+  // =========================
+  // Helpers
+  // =========================
   function wireSearch(inputId, tableId, countId) {
     const input = document.getElementById(inputId);
     const table = document.getElementById(tableId);
@@ -774,7 +625,6 @@ if ($slip !== "") {
       t = setTimeout(run, 80);
     });
   }
-  wireSearch("searchOrders", "tableOrders", "ordCount");
 
   function escapeHtml(s) {
     return String(s)
@@ -782,7 +632,35 @@ if ($slip !== "") {
       .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
   }
 
-  // ===== Confirm delete wiring (เหมือนเดิม) =====
+  // status -> step (สำหรับ dropdown)
+  function statusToStep(status) {
+    const st = (status || "").trim().toLowerCase();
+    if (st === "cancelled") return "cancelled";
+    if (st === "shipped") return "step3";
+    if (st === "completed") return "step4";
+    // pending / confirmed / อื่นๆ -> step2
+    return "step2";
+  }
+
+  // status -> label ไทย (แสดงใน modal)
+  function statusToThai(status) {
+    const st = (status || "").trim().toLowerCase();
+    if (st === "pending") return "รอยืนยันออเดอร์";
+    if (st === "confirmed") return "ยืนยันออเดอร์";
+    if (st === "shipped") return "จัดส่งแล้ว";
+    if (st === "completed") return "สำเร็จ";
+    if (st === "cancelled") return "ยกเลิก";
+    return st ? st : "-";
+  }
+
+  // =========================
+  // Search
+  // =========================
+  wireSearch("searchOrders", "tableOrders", "ordCount");
+
+  // =========================
+  // Delete confirm
+  // =========================
   const hiddenForm = document.getElementById("hiddenDeleteForm");
   const hdId = document.getElementById("hd_id");
 
@@ -810,29 +688,44 @@ if ($slip !== "") {
     hiddenForm.submit();
   });
 
-  // ===== Live detail modal (AJAX) =====
+  // =========================
+  // Detail modal (ดูรายละเอียด + แก้สถานะในที่เดียว)
+  // =========================
   const modalOrderDetailEl = document.getElementById("modalOrderDetail");
   const modalOrderDetail = modalOrderDetailEl ? new bootstrap.Modal(modalOrderDetailEl) : null;
 
-  function money(n){
-    const x = Number(n || 0);
-    return x.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-  }
+  // ฟิลด์ใน modal detail (ต้องมีจริงใน HTML)
+  // - hidden input:  <input type="hidden" name="id" id="d_id">
+  // - select step:   <select name="step" id="d_step">...</select>
+  const dIdInput = document.getElementById("d_id");
+  const dStepSelect = document.getElementById("d_step");
 
   document.querySelectorAll(".js-view").forEach(btn => {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
 
-      // fill header from dataset (เร็ว ไม่ต้องรอ)
+      // ✅ เซ็ต id ให้ฟอร์ม update ใน modal เดียวกัน
+      if (dIdInput) dIdInput.value = id;
+
+      // ✅ เซ็ตค่า step dropdown ตาม status ปัจจุบัน
+      const stRaw = btn.dataset.status || "";
+      if (dStepSelect) dStepSelect.value = statusToStep(stRaw);
+
+      // เติมข้อมูลหัวบิล
       document.getElementById("d_order_no").textContent = btn.dataset.order_no || "-";
       document.getElementById("d_customer").textContent = btn.dataset.customer_name || "-";
       document.getElementById("d_phone").textContent = btn.dataset.customer_phone || "-";
       document.getElementById("d_address").textContent = btn.dataset.customer_address || "-";
       document.getElementById("d_note").textContent = btn.dataset.note || "-";
-      document.getElementById("d_status").textContent = btn.dataset.status || "-";
-      document.getElementById("d_created").textContent = btn.dataset.created_at || "-";
+
+      // แสดงสถานะใน modal (ให้เป็นภาษาไทย)
+      document.getElementById("d_status").textContent = statusToThai(stRaw);
+
       document.getElementById("d_total").textContent =
-        `${btn.dataset.total_qty || 0} ชิ้น • ฿${money(btn.dataset.total_amount)}`;
+        `${btn.dataset.total_qty || 0} ชิ้น • ฿${Number(btn.dataset.total_amount || 0).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}`;
 
       const tb = document.getElementById("detailItems");
       tb.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">กำลังโหลด...</td></tr>`;
@@ -840,7 +733,9 @@ if ($slip !== "") {
       modalOrderDetail?.show();
 
       try {
-        const res = await fetch("ajax_order_detail.php?id=" + encodeURIComponent(id), { headers: {"Accept":"application/json"} });
+        const res = await fetch("ajax_order_detail.php?id=" + encodeURIComponent(id), {
+          headers: { "Accept": "application/json" }
+        });
         const data = await res.json();
 
         if (!data || data.error) {
@@ -852,6 +747,11 @@ if ($slip !== "") {
           tb.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">ไม่มีรายการสินค้า</td></tr>`;
           return;
         }
+
+        const money = (n) => Number(n || 0).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
 
         let html = "";
         data.items.forEach(it => {
@@ -872,56 +772,11 @@ if ($slip !== "") {
     });
   });
 
-  // ===== Slip verify modal =====
-const modalSlipEl = document.getElementById("modalSlip");
-const modalSlip = modalSlipEl ? new bootstrap.Modal(modalSlipEl) : null;
-
-document.querySelectorAll(".js-slip").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.getElementById("sf_id").value = btn.dataset.id || "";
-
-    document.getElementById("slip_order_no").textContent = btn.dataset.order_no || "-";
-    document.getElementById("slip_payment_status").value = btn.dataset.payment_status || "pending_verify";
-    document.getElementById("slip_note").value = btn.dataset.verified_note || "";
-
-    document.getElementById("slip_verified_by").textContent = btn.dataset.verified_by || "-";
-    document.getElementById("slip_verified_at").textContent =
-      btn.dataset.verified_at ? ("• " + btn.dataset.verified_at) : "";
-
-const url = (btn.dataset.slip_url || "").trim();
-const img = document.getElementById("slip_img");
-
-if (!url) {
-  img.removeAttribute("src");
-  img.alt = "ไม่มีสลิป";
-} else {
-  // ใช้ URL ที่ PHP เตรียมมาให้เลย + กัน cache
-  img.src = url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
-  img.alt = "slip";
-
-  img.onerror = () => {
-    img.removeAttribute("src");
-    img.alt = "โหลดสลิปไม่สำเร็จ (พาธผิดหรือไม่พบไฟล์)";
-  };
-}
-
-    modalSlip?.show();
-  });
-});
-
-document.getElementById("btnSaveSlip")?.addEventListener("click", () => {
-  document.getElementById("sf_payment_status").value =
-    document.getElementById("slip_payment_status").value;
-
-  document.getElementById("sf_verified_note").value =
-    document.getElementById("slip_note").value || "";
-
-  document.getElementById("slipForm").submit();
-});
-
-  // ===== Result toast after server flash =====
+  // =========================
+  // Toast (Flash)
+  // =========================
   const resultToastEl = document.getElementById("resultToast");
-  const resultToast = resultToastEl ? new bootstrap.Toast(resultToastEl, {autohide: false}) : null;
+  const resultToast = resultToastEl ? new bootstrap.Toast(resultToastEl, { autohide: false }) : null;
 
   <?php if ($flash): ?>
     (function(){
@@ -959,6 +814,16 @@ document.getElementById("btnSaveSlip")?.addEventListener("click", () => {
       }, 3000);
     })();
   <?php endif; ?>
+
+    document.getElementById("btnSaveStatus")?.addEventListener("click", () => {
+    const id = document.getElementById("d_id")?.value || "";
+    const step = document.getElementById("d_step")?.value || "step2";
+
+    document.getElementById("f_id").value = id;
+    document.getElementById("f_step").value = step;
+
+    document.getElementById("frmUpdateStatus").submit();
+  });
 </script>
 </body>
 </html>

@@ -180,7 +180,7 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
   <style>
     body { background: #f6f7fb; font-family: "Kanit", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Thai", sans-serif; }
-    .app-shell { max-width: 1300px; }
+    .app-shell { max-width: 1500px; }
     .brand-badge { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 16px; }
     .card { border: 0; border-radius: 18px; box-shadow: 0 10px 25px rgba(15, 23, 42, .06); }
     .nav-pills .nav-link { border-radius: 14px; }
@@ -250,8 +250,7 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <i class="bi bi-shop fs-5"></i>
       </div>
       <div>
-        <div class="fw-semibold">Bakery Admin</div>
-        <div class="text-muted small">Backpage • สมูทขึ้น + CRUD ลูกค้า</div>
+        <div class="fw-semibold">HokKao(69)Bakery Admin</div>
       </div>
     </div>
 
@@ -274,37 +273,8 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
       <div>
         <div class="fw-semibold fs-5">จัดการข้อมูล</div>
-        <div class="text-muted small">เพิ่ม • แก้ไข • ลบ • ค้นหา • ยืนยันด้วย Toast</div>
       </div>
-
-      <!-- NAV (active ตามหน้า) -->
-      <ul class="nav nav-pills gap-2">
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_products.php" ? "active" : "" ?>" href="backpage_products.php?page=1">
-            <i class="bi bi-bag-heart me-1"></i> สินค้า
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_categories.php" ? "active" : "" ?>" href="backpage_categories.php?page=1">
-            <i class="bi bi-tags me-1"></i> ประเภทสินค้า
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_orders.php" ? "active" : "" ?>" href="backpage_orders.php?page=1">
-            <i class="bi bi-receipt me-1"></i> ออเดอร์
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_customers.php" ? "active" : "" ?>" href="backpage_customers.php?page=1">
-            <i class="bi bi-people me-1"></i> ลูกค้า
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= $currentPage==="backpage_admins.php" ? "active" : "" ?>" href="backpage_admins.php?page=1">
-            <i class="bi bi-shield-lock me-1"></i> แอดมิน
-          </a>
-        </li>
-      </ul>
+        <?php require __DIR__ . "/partials/admin_nav.php"; ?>
     </div>
 
     <hr class="my-2">
@@ -413,7 +383,7 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
   </div>
 
   <div class="text-center text-muted small mt-4">
-    <i class="bi bi-shield-lock me-1"></i> Admin Panel • Customers CRUD • Smooth UI
+    <i class="bi bi-shield-lock me-1"></i> Admin Panel
   </div>
 </div>
 

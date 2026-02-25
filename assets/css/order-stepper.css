@@ -1,0 +1,79 @@
+
+/* ===== Tracking Stepper (arrow) ===== */
+.tstepper{
+  display:flex;
+  align-items:stretch;
+  gap:0;
+  flex-wrap:wrap;
+  margin-top:12px;
+  border-radius:16px;
+  overflow:hidden;
+  background: rgba(0,0,0,.03);
+}
+
+.tstep{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 16px;
+  background: transparent;
+  min-height:64px;
+  flex: 1 1 220px;
+}
+
+/* ลูกศรต่อขั้น */
+.tstep:not(:last-child)::after{
+  content:"";
+  position:absolute;
+  top:0; right:-18px;
+  width:0; height:0;
+  border-top: 32px solid transparent;
+  border-bottom: 32px solid transparent;
+  border-left: 18px solid rgba(0,0,0,.03);
+  z-index:2;
+}
+.tstep:not(:last-child)::before{
+  content:"";
+  position:absolute;
+  top:0; right:-19px;
+  width:0; height:0;
+  border-top: 32px solid transparent;
+  border-bottom: 32px solid transparent;
+  border-left: 19px solid rgba(255,255,255,.85);
+  z-index:1;
+}
+
+.ticon{
+  width:38px; height:38px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background: rgba(0,0,0,.10);
+  color: rgba(0,0,0,.65);
+  flex: 0 0 38px;
+}
+
+.ttext{ line-height:1.15; }
+.ttitle{ font-weight:700; font-size:.95rem; }
+.tdesc{ font-size:.80rem; color: rgba(0,0,0,.55); margin-top:2px; }
+
+/* states */
+.tstep.todo .ticon{ background: rgba(0,0,0,.10); color: rgba(0,0,0,.55); }
+
+.tstep.doing{ background: rgba(13,110,253,.08); }
+.tstep.doing .ticon{ background: rgba(13,110,253,.18); color:#0d6efd; }
+
+.tstep.done{ background: rgba(25,135,84,.08); }
+.tstep.done .ticon{ background: rgba(25,135,84,.18); color:#198754; }
+
+.tstep.fail{ background: rgba(220,53,69,.08); }
+.tstep.fail .ticon{ background: rgba(220,53,69,.18); color:#dc3545; }
+
+/* responsive */
+@media (max-width: 768px){
+  .tstep{ flex: 1 1 100%; }
+  .tstep:not(:last-child)::after,
+  .tstep:not(:last-child)::before{ display:none; }
+  .tstepper{ border-radius:16px; }
+}

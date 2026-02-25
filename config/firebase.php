@@ -1,4 +1,4 @@
 <?php
 return [
-  "service_account" => __DIR__ . "/firebase_service_account.json",
+  "service_account" => "/var/www/secure/firebase_service_account.json",
 ];
